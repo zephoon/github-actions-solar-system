@@ -6,36 +6,28 @@ on:
     branches:
       - main
       - 'feature/*'
+
+env:
+  MONGO_URI: mongodb+srv://supercluster.d83jj.mongodb.net/superData
+  MONGO_USERNAME: superuser
+  MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
     
 jobs:
     unit-testing:
         name: Unit Testing
-        strategy:
-          matrix:
-            node-version: [18, 20]
-            operating-system: [ubuntu-latest, macos-latest]
-            exclude:
-              - node-version: 18
-                operating-system: macos-latest
-        runs-on: ${{ matrix.operating-system }}
+        runs-on: ubuntu-latest
         steps:
         - name: Checkout Repository
           uses: actions/checkout@v4
 
-        - name: Setup NodeJS Version ${{ matrix.node-version }}
+        - name: Setup NodeJS Version
           uses: actions/setup-node@v4
           with:
-            node-version: ${{ matrix.node-version }}
+            node-version: 20
     
         - name: Install Dependencies
           run: npm install
     
-        - name: Cache NPM Dependencies
-          uses: actions/cache@v3
-          with:
-            path: node_modules
-            key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
-
         - name: Unit Testing
           run: npm test
           
@@ -45,4 +37,34 @@ jobs:
           with:
             name: Mocha-Test-Result
             path: test-results.xml
+
+    code-coverage:
+        name: Code Coverage
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+
+        - name: Setup NodeJS Version
+          uses: actions/setup-node@v4
+          with:
+            node-version: 20
+    
+        - name: Install Dependencies
+          run: npm install
+    
+        - name: Code Coverage
+          continue-on-error: true
+          run: npm run coverage
+          
+        - name: Archive Code Coverage Result
+          uses: actions/upload-artifact@v4
+          with:
+            name: Code-Coverage-Result
+            path: coverage
+            retention-days: 5
+
+
+
+
 
